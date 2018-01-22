@@ -1,5 +1,5 @@
-import format from './format.js';
-import { trigger } from './utils'
+import format from "./format.js";
+import { trigger } from "./utils";
 
 /**
  * Event handler
@@ -11,7 +11,7 @@ function updateValue (el, force = false) {
 
   if(force || (value && value !== previousValue && value.length > previousValue.length)) {
     el.value = format(value, mask);
-    trigger(el, 'input')
+    trigger(el, "input")
   }
 
   el.dataset.previousValue = value;
@@ -27,8 +27,37 @@ function updateMask(el, mask) {
   el.dataset.mask = mask;
 }
 
+/**
+ * Create an cssSelector for an element. This should be used to help
+ * the programmer to find errors when creating masks.
+ * @param {HTMLInputElement} ele
+ */
+function getSelector(ele) {
+  let result;
+  if (!ele ) {
+    result = "";
+  } else if (ele.getAttribute("id")) {
+    result = "#" + ele.getAttribute("id");
+  } else if (ele.getAttribute("class")) {
+    result = "." + ele.getAttribute("class").split(" ").join(".");
+  } else {
+    result = ele.tagName;
+  }
+
+  return result;
+}
 
 /**
+ * If not bound to an input element at the root level, that function will resolve
+ * first child input as the masking target.
+ * @param {HTMLInputElement} ele
+ */
+function getInput(el) {
+  return el.querySelector('input');
+}
+
+
+ /**
  * Vue directive definition
  */
 const VueMaskDirective = {
@@ -41,9 +70,11 @@ const VueMaskDirective = {
    * @param {?String}          value
    */
   bind (el, {value}) {
-    updateMask(el, value);
-    updateValue(el);
+    const input = getInput(el);
+    updateMask(input, value);
+    updateValue(input);
   },
+
 
   /**
    * Called after the containing component has updated,
@@ -57,16 +88,16 @@ const VueMaskDirective = {
    * @param {?String}          oldValue
    */
   componentUpdated(el, {value, oldValue}){
-
+    const input = getInput(el);
     let isMaskChanged = value !== oldValue;
 
     // update mask first if changed
     if(isMaskChanged){
-      updateMask(el, value);
+      updateMask(input, value);
     }
 
     // update value
-    updateValue(el, isMaskChanged);
+    updateValue(input, isMaskChanged);
   }
 };
 
@@ -76,7 +107,7 @@ const VueMaskDirective = {
  * @param {Vue} Vue
  */
 const VueMaskPlugin = function (Vue) {
-  Vue.directive('mask', VueMaskDirective);
+  Vue.directive("mask", VueMaskDirective);
 };
 
 export { VueMaskPlugin as default, VueMaskPlugin, VueMaskDirective };
